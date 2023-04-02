@@ -6,7 +6,6 @@ export default async function UsersTable() {
         <table>
             <thead>
                 <tr>
-                    <th>User ID</th>
                     <th>Name</th>
                     <th>Website</th>
                 </tr>
