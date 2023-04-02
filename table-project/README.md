@@ -15,3 +15,6 @@ pnpm dev
 
 # What's up with tables?
 
+Getting data into the browser and rendering a table into the browser is fairly trivial.
+
+However, what happens when we want interactivity? We want to take the same data and allow the client to transform it in a way that works for them.
