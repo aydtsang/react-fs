@@ -1,5 +1,5 @@
-type User = {
-    id: string
+export type User = {
+    id: number,
     name: string
     website: string
 }
