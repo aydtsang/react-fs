@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useReducer, useMemo } from 'react';
 
 import {
+    PaginationState,
     createColumnHelper,
     flexRender,
     getCoreRowModel,
@@ -29,63 +30,149 @@ const columns = [
 ];
   
 export default function UserTable() {
-  const { isLoading, isError, data } = useQuery({
-    queryKey: ["users"],
-    queryFn: () => fetchUsers(),
-    // Set staleTime to see that we get the "Server" output,
-    // can later switch tabs to trigger revalidation and see we
-    // get the "Client" output
-    staleTime: 10000,
-  });
+    const [{ pageIndex, pageSize }, setPagination] = useState<PaginationState>({
+        pageIndex: 0,
+        pageSize: 3,
+    })
 
-  const rerender = useReducer(() => ({}), {})[1];
+    const fetchDataOptions = {
+        pageIndex,
+        pageSize,
+    }
 
-  const options = {
-    data: data??[],
-    columns: columns,
-    getCoreRowModel: getCoreRowModel(),
-  }
+    const defaultData = useMemo(() => [], [])
 
-  const table = useReactTable(options);
+    const pagination = useMemo(
+        () => ({
+            pageIndex,
+            pageSize,
+        }),
+        [pageIndex, pageSize]
+    )
 
-  return (
-    <div>
-        {(isLoading || isError)? (<div>...</div>):(
-        <>
-        <table>
-            <thead>
-            {table.getHeaderGroups().map(headerGroup => (
-                <tr key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
-                    <th key={header.id}>
-                    {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                        )}
-                    </th>
+    const rerender = useReducer(() => ({}), {})[1];
+
+    const { 
+        isLoading,
+        isError,
+        error,
+        data,
+        isFetching,
+        isPreviousData,
+    } = useQuery({
+        queryKey: ["data", fetchDataOptions],
+        queryFn: () => fetchUsers(fetchDataOptions),
+        keepPreviousData: true,
+    });
+
+    const options = {
+        data: data ?? defaultData,
+        columns: columns,
+        getCoreRowModel: getCoreRowModel(),
+        pageCount: 4,
+        state: {
+            pagination,
+        },
+        onPaginationChange: setPagination,
+        manualPagination: true,
+    }
+
+    const table = useReactTable(options);
+
+    return (
+        <div>
+            {(isLoading || isError)? (<div>...</div>):(
+            <>
+            <table>
+                <thead>
+                {table.getHeaderGroups().map(headerGroup => (
+                    <tr key={headerGroup.id}>
+                    {headerGroup.headers.map(header => (
+                        <th key={header.id}>
+                        {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                            )}
+                        </th>
+                    ))}
+                    </tr>
                 ))}
-                </tr>
-            ))}
-            </thead>
-            <tbody>
-            {table.getRowModel().rows.map(row => (
-                <tr key={row.id}>
-                {row.getVisibleCells().map(cell => (
-                    <td key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
+                </thead>
+                <tbody>
+                {table.getRowModel().rows.map(row => (
+                    <tr key={row.id}>
+                    {row.getVisibleCells().map(cell => (
+                        <td key={cell.id}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                    ))}
+                    </tr>
                 ))}
-                </tr>
-            ))}
-            </tbody>
-        </table>
-        <button onClick={() => rerender()}>
-            Rerender
-        </button>
-        </>
-        )}
-    </div>
-  );
+                </tbody>
+            </table>
+            <button onClick={() => rerender()}>
+                Rerender
+            </button>
+            <div>
+                <button
+                    onClick={() => table.setPageIndex(0)}
+                    disabled={!table.getCanPreviousPage()}
+                >
+                {'<<'}
+                </button>
+                <button
+                    onClick={() => table.previousPage()}
+                    disabled={!table.getCanPreviousPage()}
+                >
+                {'<'}
+                </button>
+                <button
+                    onClick={() => table.nextPage()}
+                    disabled={!table.getCanNextPage()}
+                >
+                {'>'}
+                </button>
+                <button
+                    onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                    disabled={!table.getCanNextPage()}
+                >
+                {'>>'}
+                </button>
+                <span>
+                    <div>Page</div>
+                    <strong>
+                        {table.getState().pagination.pageIndex + 1} of{' '}
+                        {table.getPageCount()}
+                    </strong>
+                </span>
+                <span>
+                | Go to page:
+                <input
+                    type="number"
+                    defaultValue={table.getState().pagination.pageIndex + 1}
+                    onChange={e => {
+                        const page = e.target.value ? Number(e.target.value) - 1: 0
+                        table.setPageIndex(page)
+                    }}
+                />
+                </span>
+                <select
+                    value={table.getState().pagination.pageSize}
+                    onChange={e => {
+                        table.setPageSize(Number(e.target.value))
+                    }}
+                >
+                {[3, 6, 9, 12, 15].map(pageSize => (
+                    <option key={pageSize} value={pageSize}>
+                    Show {pageSize}
+                    </option>
+                ))}
+                </select>
+            </div>
+            </>
+            )}
+        </div>
+    );
 }
