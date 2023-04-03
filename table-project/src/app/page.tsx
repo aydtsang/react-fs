@@ -1,9 +1,9 @@
-import ClientComponent from "~/components/ClientComponent";
+import UserTable from "~/components/UserTable";
 
 export default function Home() {
   return (
     <main>
-      <ClientComponent/>
+      <UserTable/>
     </main>
   )
 }

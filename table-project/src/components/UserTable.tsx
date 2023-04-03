@@ -3,9 +3,8 @@
 
 import fetchUsers from '~/utils/fetchUsers';
 import { useQuery } from "@tanstack/react-query";
-import { Suspense } from 'react';
 
-export default function ClientComponent() {
+export default function UserTable() {
   const { isLoading, isError, data } = useQuery({
     queryKey: ["users"],
     queryFn: () => fetchUsers(),
