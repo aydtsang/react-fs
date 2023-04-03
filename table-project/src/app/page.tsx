@@ -1,10 +1,9 @@
-import UsersTable from "~/components/UsersTable";
+import ClientComponent from "~/components/ClientComponent";
 
 export default function Home() {
   return (
     <main>
-      {/* @ts-expect-error Server Component */}
-      <UsersTable/>
+      <ClientComponent/>
     </main>
   )
 }
